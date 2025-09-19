@@ -76,8 +76,7 @@ function App() {
       if (tables.length) {
         info = `Found ${tables.length} tables: ${tables.map((t) => t.name).join(', ')}`;
       } else if (raw) {
-        const preview = raw.length > 400 ? raw.slice(0, 400) + '…' : raw;
-        info = `Received schema description (text):\n\n${preview}`;
+        info = `Received schema description (text):\n\n${raw}`;
       } else {
         info = `Schema received, but format is unknown.`;
       }
