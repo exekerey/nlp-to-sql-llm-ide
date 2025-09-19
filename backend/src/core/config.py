@@ -38,7 +38,7 @@ class Config(BaseSettings):
 
     # internal
     sql_generation_max_iterations: int = 3
-    default_llm_model: str = "gpt-4.1"
+    default_llm_model: str = "qwen-3-235b-a22b-instruct-2507-no-streaming"
     context_token_limit: int = 64_128
 
 

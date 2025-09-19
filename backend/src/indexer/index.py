@@ -1,7 +1,6 @@
 from typing import List, Dict, Any
 
 from sqlalchemy import create_engine, MetaData
-
 from src.core.llms import get_llm
 from src.core.models import DatabaseCredentials
 from src.core.vector_store import add_documents
@@ -98,6 +97,5 @@ def index_database(database_uri: str, thread_id: str) -> str:
 
     # 3. Generate a high-level summary for the LLM context
     schema_string_for_summary = "\n\n".join(docs)
-    # summary = _summarize_schema_with_llm(schema_string_for_summary)
-    summary = "This database models a music store, with main entities including artists, albums, tracks, genres, and media types, as well as customers, employees, invoices, and playlists. Artists create albums, which contain tracks; each track is associated with a genre and media type. Customers are supported by employees and can make purchases, which are recorded as invoices containing individual invoice lines for each track bought. Playlists group tracks together, and the many-to-many relationship between playlists and tracks is managed by a linking table. Employees can also have hierarchical relationships, reporting to other employees."
+    summary = _summarize_schema_with_llm(schema_string_for_summary)
     return schema_string_for_summary

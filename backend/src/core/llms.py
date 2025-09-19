@@ -33,12 +33,19 @@ models = {  # not separating by providers but rather by LLMs themselves for poss
         timeout=config.llm_timeout,
         api_key=config.cerebras_api_key
     ),
-    "qwen-3-32b": ChatCerebras(
-        model="qwen-3-32b",
+    "qwen-3-235b-a22b-instruct-2507-no-streaming": ChatCerebras(
+        model="qwen-3-235b-a22b-instruct-2507",
         max_retries=config.llm_max_retries + 1,
         temperature=0,
         timeout=config.llm_timeout + 10,  # overhead for arkham summaries.
         streaming=False,
+        api_key=config.cerebras_api_key
+    ),
+    "qwen-3-235b-a22b-instruct-2507": ChatCerebras(
+        model="qwen-3-235b-a22b-instruct-2507",
+        max_retries=config.llm_max_retries + 1,
+        temperature=0,
+        timeout=config.llm_timeout + 10,  # overhead for arkham summaries.
         api_key=config.cerebras_api_key
     )
 }
@@ -46,6 +53,6 @@ models = {  # not separating by providers but rather by LLMs themselves for poss
 
 def get_llm(stream=True):
     if not stream:
-        return models["gpt-4.1-no-stream"]
+        return models["qwen-3-235b-a22b-instruct-2507-no-streaming"]
     llm = models[config.default_llm_model]
     return llm
