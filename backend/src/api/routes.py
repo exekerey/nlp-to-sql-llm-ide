@@ -21,6 +21,12 @@ from src.indexer.index import index_database, construct_db_uri
 router = APIRouter(prefix="/v1")
 
 
+@router.get("/test")
+def test_connection():
+    """Simple test endpoint to check if backend is reachable"""
+    return {"status": "ok", "message": "Backend is reachable"}
+
+
 # @router.get("/conversations")
 
 

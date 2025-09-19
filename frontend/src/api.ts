@@ -43,6 +43,18 @@ export interface ExecuteSqlResponse {
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/v1';
 
+export async function testConnection(signal?: AbortSignal): Promise<{ status: string; message: string }> {
+    const res = await fetch(`${BASE_URL}/test`, {
+        method: 'GET',
+        signal,
+        credentials: 'include'
+    });
+    if (!res.ok) {
+        throw new Error('Connection test failed');
+    }
+    return res.json();
+}
+
 export async function initConversation(payload: InitPayload, signal?: AbortSignal): Promise<InitResponse> {
     const res = await fetch(`${BASE_URL}/conversation/init`, {
         method: 'POST',

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Database, Server, Key, Globe, Shield, Loader, CheckCircle, AlertCircle } from 'lucide-react';
 import { DatabaseConfig } from '../App';
+import { testConnection } from '../api';
 
 interface DatabaseConnectionProps {
   onConnect: (config: DatabaseConfig) => void;
@@ -21,6 +22,8 @@ const DatabaseConnection: React.FC<DatabaseConnectionProps> = ({ onConnect, isIn
 
   const [isConnecting, setIsConnecting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const dbTypes = [
     { value: 'postgresql', label: 'PostgreSQL', defaultPort: 5432, icon: '🐘' },
@@ -61,9 +64,17 @@ const DatabaseConnection: React.FC<DatabaseConnectionProps> = ({ onConnect, isIn
   };
 
   const handleTestConnection = async () => {
-    if (!validateForm()) return;
-    // как и раньше — просто демо-экшен
-    alert('Connection test successful! ✅');
+    setIsTesting(true);
+    setTestResult(null);
+    
+    try {
+      await testConnection();
+      setTestResult({ success: true, message: 'Backend connection successful!' });
+    } catch (error: any) {
+      setTestResult({ success: false, message: error?.message || 'Connection test failed' });
+    } finally {
+      setIsTesting(false);
+    }
   };
 
   if (isIndexing) {
@@ -119,6 +130,22 @@ const DatabaseConnection: React.FC<DatabaseConnectionProps> = ({ onConnect, isIn
           {connectError && (
               <div className="p-3 mb-6 rounded-lg bg-red-900/30 border border-red-700 text-red-300 text-sm whitespace-pre-wrap break-words">
                 {connectError}
+              </div>
+          )}
+
+          {/* Test Result Banner */}
+          {testResult && (
+              <div className={`p-3 mb-6 rounded-lg text-sm flex items-center space-x-2 ${
+                  testResult.success 
+                      ? 'bg-green-900/30 border border-green-700 text-green-300' 
+                      : 'bg-red-900/30 border border-red-700 text-red-300'
+              }`}>
+                {testResult.success ? (
+                    <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                ) : (
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                )}
+                <span>{testResult.message}</span>
               </div>
           )}
 
@@ -259,10 +286,20 @@ const DatabaseConnection: React.FC<DatabaseConnectionProps> = ({ onConnect, isIn
               <button
                   type="button"
                   onClick={handleTestConnection}
-                  className="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2"
+                  disabled={isTesting}
+                  className="flex-1 bg-gray-600 hover:bg-gray-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2"
               >
-                <AlertCircle className="h-4 w-4" />
-                <span>Test Connection</span>
+                {isTesting ? (
+                    <>
+                      <Loader className="h-4 w-4 animate-spin" />
+                      <span>Testing...</span>
+                    </>
+                ) : (
+                    <>
+                      <AlertCircle className="h-4 w-4" />
+                      <span>Test Connection</span>
+                    </>
+                )}
               </button>
 
               <button
