@@ -10,15 +10,15 @@ from langfuse import Langfuse
 from langgraph.prebuilt import InjectedState
 from sqlalchemy import create_engine, text
 
-from src.agent.nodes.util_nodes import filter_messages
-from src.agent.prompts import DEVELOPER_AGENT_PROMPT
-from src.agent.state import State
-from src.core.config import config
-from src.core.llms import get_llm
-from src.core.utils import run_async
-from src.core.vector_store import *
-from src.core.vector_store import query_collection
-from src.indexer.index import SCHEMA_COLLECTION_NAME
+from backend.src.agent.nodes.util_nodes import filter_messages
+from backend.src.agent.prompts import DEVELOPER_AGENT_PROMPT
+from backend.src.agent.state import State
+from backend.src.core.config import config
+from backend.src.core.llms import get_llm
+from backend.src.core.utils import run_async
+from backend.src.core.vector_store import *
+from backend.src.core.vector_store import query_collection
+from backend.src.indexer.index import SCHEMA_COLLECTION_NAME
 
 logger = logging.getLogger(__name__)
 

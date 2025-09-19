@@ -3,7 +3,7 @@ from typing import Optional
 from langchain_cerebras import ChatCerebras
 from langchain_openai import ChatOpenAI
 
-from src.core.config import config  # noqa
+from backend.src.core.config import config  # noqa
 
 models = {  # not separating by providers but rather by LLMs themselves for possible future comparison.
     "gpt-4.1": ChatOpenAI(  # favorite.
@@ -11,6 +11,7 @@ models = {  # not separating by providers but rather by LLMs themselves for poss
         temperature=0,
         max_retries=0,
         timeout=30,  # p90 + some overhead.
+        api_key=config.openai_api_key
     ),
     "llama-3.3-70b": ChatCerebras(  # bad with tool calls
         model="llama-3.3-70b",
@@ -18,12 +19,14 @@ models = {  # not separating by providers but rather by LLMs themselves for poss
         temperature=1,
         timeout=config.llm_timeout,
         streaming=False,
+        api_key=config.openai_api_key
     ),
     "llama-4-scout-17b-16e-instruct": ChatCerebras(  # bad with tool calls
         model="llama-4-scout-17b-16e-instruct",
         temperature=0,
         max_retries=config.llm_max_retries,
         timeout=config.llm_timeout,
+        api_key=config.cerebras_api_key
     ),
     "qwen-3-32b": ChatCerebras(
         model="qwen-3-32b",
@@ -31,6 +34,7 @@ models = {  # not separating by providers but rather by LLMs themselves for poss
         temperature=0,
         timeout=config.llm_timeout + 10,  # overhead for arkham summaries.
         streaming=False,
+        api_key=config.cerebras_api_key
     )
 }
 

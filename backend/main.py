@@ -1,8 +1,8 @@
 import uvicorn
 from fastapi import FastAPI
 
-from src.agent.graph import graph
-from src.api import routes
+from backend.src.agent.graph import graph
+from backend.src.api import routes
 
 app = FastAPI()
 

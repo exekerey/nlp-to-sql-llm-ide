@@ -1,5 +1,5 @@
 import chromadb
-from src.core.embeddings import get_embedding_function
+from backend.src.core.embeddings import get_embedding_function
 from typing import List, Dict, Any
 
 # Define a path for the persistent storage of the vector store
