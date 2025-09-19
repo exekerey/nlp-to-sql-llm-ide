@@ -74,7 +74,7 @@ async def chat(
         def stream_response():
             yield preprocess_event({"event": "start", "chat_id": thread_id})
             try:
-                for stream_type, chunk in graph.graph.stream(
+                for stream_type, chunk in graph.stream(
                         {
                             "messages": [HumanMessage(content=content)],
                         },
@@ -82,7 +82,8 @@ async def chat(
                         stream_mode=["messages", "values", "custom"]
                 ):
                     if stream_type == "custom":
-                        yield preprocess_event({"event": "internal", "data": chunk.get("internal", "")})
+                        event_type = list(chunk.keys())[0]
+                        yield preprocess_event({"event": event_type, "data": chunk.get(event_type, "")})
                         continue
                     if stream_type == "values":
                         continue
@@ -99,6 +100,7 @@ async def chat(
                     yield preprocess_event({"event": "content", "data": token})
                 yield preprocess_event({"event": "end", "chat_id": thread_id})
             except Exception as e:
+                print(e)
                 yield preprocess_event({"event": "error", "chat_id": thread_id, "data": "Sorry, an error occurred."})
 
         return StreamingResponse(stream_response(), media_type="application/x-ndjson")

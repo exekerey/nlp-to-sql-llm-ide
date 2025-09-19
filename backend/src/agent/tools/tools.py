@@ -7,6 +7,7 @@ from langchain_core.messages import SystemMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool, InjectedToolCallId
 from langfuse import Langfuse
+from langgraph.config import get_stream_writer
 from langgraph.prebuilt import InjectedState
 from langgraph.types import Command
 from sqlalchemy import create_engine, text
@@ -118,7 +119,7 @@ def delegate_to_database_administrator(tool_call_id: Annotated[str, InjectedTool
             previous_steps_errors=error
         ))
 
-        llm = get_llm().bind_tools([]).with_structured_output(method="json_mode")
+        llm = get_llm(stream=False).bind_tools([]).with_structured_output(method="json_mode")
         messages = filter_messages(state.messages)
         payload = llm.invoke([system_message] + messages)
 
@@ -134,10 +135,13 @@ def delegate_to_database_administrator(tool_call_id: Annotated[str, InjectedTool
         except Exception as e:
             error = str(e)
             continue
+        writer = get_stream_writer()
+        writer({"sql_query": sql})
+        writer({"query_results": rows})
         payload.update({"query_results": rows})
         state.sql_query = sql
         state.query_results = rows
-        state.messages.append(ToolMessage(content=payload, tool_call_id=tool_call_id))
+        state.messages = [ToolMessage(content=payload, tool_call_id=tool_call_id)]
         return Command(
             update=state,
         )
