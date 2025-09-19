@@ -34,4 +34,4 @@ class Config(BaseSettings):
     context_token_limit: int = 64_128
 
 
-config = Config(_env_file=Path(__file__).parents[2] / ".env", )  # noqa
+config = Config(_env_file=Path(__file__).parents[3] / ".env", )  # noqa

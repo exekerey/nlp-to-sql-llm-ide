@@ -3,7 +3,7 @@ from typing import Optional
 from langchain_cerebras import ChatCerebras
 from langchain_openai import ChatOpenAI
 
-from backend.src.core.config import config  # noqa
+from src.core.config import config  # noqa
 
 models = {  # not separating by providers but rather by LLMs themselves for possible future comparison.
     "gpt-4.1": ChatOpenAI(  # favorite.

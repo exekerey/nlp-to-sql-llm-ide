@@ -1,5 +1,5 @@
 import os
-from backend.src.core.config import config
+from src.core.config import config
 
 # A cache for the embedding function to avoid re-initializing it every time.
 _embedding_function_cache = None

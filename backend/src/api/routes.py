@@ -6,13 +6,13 @@ from fastapi.responses import StreamingResponse, JSONResponse
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.runnables import RunnableConfig
 
-from backend.src.agent.graph import graph
-from backend.src.agent.langfuse_connection import langfuse_handler
-from backend.src.agent.state import State
-from backend.src.api.deps import validate_thread_id
-from backend.src.core.models import DatabaseCredentials, Message
-from backend.src.core.utils import generate_uuid
-from backend.src.indexer.index import index_database, construct_db_uri
+from src.agent.graph import graph
+from src.agent.langfuse_connection import langfuse_handler
+from src.agent.state import State
+from src.api.deps import validate_thread_id
+from src.core.models import DatabaseCredentials, Message
+from src.core.utils import generate_uuid
+from src.indexer.index import index_database, construct_db_uri
 
 router = APIRouter(prefix="/v1")
 

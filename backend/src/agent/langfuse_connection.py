@@ -1,6 +1,6 @@
 from langfuse.callback import CallbackHandler
 
-from backend.src.core.config import config
+from src.core.config import config
 
 langfuse_handler = CallbackHandler(
     version=config.project_version,

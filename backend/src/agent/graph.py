@@ -7,10 +7,10 @@ from langgraph.constants import END
 from langgraph.graph import StateGraph, START
 from langgraph.prebuilt import ToolNode
 
-from backend.src.agent.nodes.agent_nodes import *
-from backend.src.agent.nodes.util_nodes import route_llm, init_node
-from backend.src.agent.state import State
-from backend.src.core.utils import generate_uuid
+from src.agent.nodes.agent_nodes import *
+from src.agent.nodes.util_nodes import route_llm, init_node
+from src.agent.state import State
+from src.core.utils import generate_uuid
 
 conn = sqlite3.connect("checkpoints.sqlite", check_same_thread=False)
 checkpointer = SqliteSaver(conn)

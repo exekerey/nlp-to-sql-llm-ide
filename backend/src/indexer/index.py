@@ -2,9 +2,9 @@ from typing import List, Dict, Any
 
 from sqlalchemy import create_engine, MetaData
 
-from backend.src.core.llms import get_llm
-from backend.src.core.models import DatabaseCredentials
-from backend.src.core.vector_store import add_documents
+from src.core.llms import get_llm
+from src.core.models import DatabaseCredentials
+from src.core.vector_store import add_documents
 
 # Define a constant for the collection name for schema details
 SCHEMA_COLLECTION_NAME = "database_schema_details"

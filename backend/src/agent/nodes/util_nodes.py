@@ -9,8 +9,8 @@ from langgraph.constants import END
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.types import Send
 
-from backend.src.agent.state import State
-from backend.src.core.config import config
+from src.agent.state import State
+from src.core.config import config
 
 
 def handle_tool_error(state) -> dict:

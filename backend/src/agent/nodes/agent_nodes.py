@@ -6,9 +6,9 @@ When there is a lot of tools that can be grouped together, or a tool is too big
 
 from langchain_core.messages import AIMessage
 
-from backend.src.agent.prompts import BUSINESS_REQUIREMENTS_DEFINER_PROMPT
-from backend.src.agent.tools import *
-from backend.src.core.llms import get_llm
+from src.agent.prompts import BUSINESS_REQUIREMENTS_DEFINER_PROMPT
+from src.agent.tools import *
+from src.core.llms import get_llm
 
 
 def business_analyst_node(state: State, config: RunnableConfig) -> Dict[str, List[AIMessage]]:
