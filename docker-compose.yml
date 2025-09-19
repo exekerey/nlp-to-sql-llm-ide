@@ -1,7 +1,5 @@
 services:
   backend:
-    networks:
-      - my-shared-net
     build:
       context: ./backend
     image: myapp-backend:latest
@@ -22,7 +20,3 @@ services:
     ports:
       - "5173:5173"
     restart: unless-stopped
-
-networks:
-  my-shared-net:
-    external: true
