@@ -33,6 +33,7 @@ def init_conversation(credentials: DatabaseCredentials, use_test_db: bool = Quer
             port=config.test_db_port,
             username=config.test_db_username,
             password=config.test_db_password,
+            database=config.test_db_name,
         )
     thread_id = generate_uuid()
     database_uri = construct_db_uri(credentials)

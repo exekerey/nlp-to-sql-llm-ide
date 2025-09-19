@@ -27,6 +27,7 @@ class Config(BaseSettings):
     test_db_port: int
     test_db_username: str
     test_db_password: str
+    test_db_name: str
 
     # langfuse
     langfuse_host: str
