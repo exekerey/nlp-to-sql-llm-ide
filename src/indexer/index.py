@@ -1,14 +1,16 @@
+from typing import List, Dict, Any
+
 from sqlalchemy import create_engine, MetaData
+
+from src.core.llms import get_llm
 from src.core.models import DatabaseCredentials
 from src.core.vector_store import add_documents
-from src.core.llms import get_llm
-from typing import List, Dict, Any
 
 # Define a constant for the collection name for schema details
 SCHEMA_COLLECTION_NAME = "database_schema_details"
 
 
-def build_connection_string(credentials: DatabaseCredentials) -> str:
+def construct_db_uri(credentials: DatabaseCredentials) -> str:
     """
     Builds a SQLAlchemy connection string from a DatabaseCredentials object.
     """
@@ -24,7 +26,7 @@ def build_connection_string(credentials: DatabaseCredentials) -> str:
     return f"{dialect_part}://{credentials.username}:{credentials.password}@{credentials.host}:{credentials.port}/{credentials.database}"
 
 
-def _create_schema_documents(metadata: MetaData) -> (List[str], List[Dict[str, Any]], List[str]):
+def _create_schema_documents(metadata: MetaData, thread_id) -> (List[str], List[Dict[str, Any]], List[str]):
     """Creates structured documents from the database schema for vector store indexing."""
     docs, metadatas, ids = [], [], []
 
@@ -67,14 +69,13 @@ def _summarize_schema_with_llm(schema_string: str) -> str:
     return response.content
 
 
-def index_database(credentials: DatabaseCredentials, thread_id: str) -> str:
+def index_database(database_uri: str, thread_id: str) -> str:
     """
     Connects to a database, indexes its schema into a vector store,
     and returns a high-level summary for the agent's context.
     """
     try:
-        connection_string = build_connection_string(credentials)
-        engine = create_engine(connection_string)
+        engine = create_engine(database_uri)
         metadata = MetaData()
         metadata.reflect(bind=engine)
     except Exception as e:
@@ -84,7 +85,7 @@ def index_database(credentials: DatabaseCredentials, thread_id: str) -> str:
         return "No tables found in the database."
 
     # 1. Create documents for the vector store
-    docs, metadatas, ids = _create_schema_documents(metadata)
+    docs, metadatas, ids = _create_schema_documents(metadata, thread_id)
 
     # 2. Add documents to the vector store, scoped by thread_id
     add_documents(
@@ -97,6 +98,6 @@ def index_database(credentials: DatabaseCredentials, thread_id: str) -> str:
 
     # 3. Generate a high-level summary for the LLM context
     schema_string_for_summary = "\n\n".join(docs)
-    summary = _summarize_schema_with_llm(schema_string_for_summary)
-
-    return summary
+    # summary = _summarize_schema_with_llm(schema_string_for_summary)
+    summary = "This database models a music store, with main entities including artists, albums, tracks, genres, and media types, as well as customers, employees, invoices, and playlists. Artists create albums, which contain tracks; each track is associated with a genre and media type. Customers are supported by employees and can make purchases, which are recorded as invoices containing individual invoice lines for each track bought. Playlists group tracks together, and the many-to-many relationship between playlists and tracks is managed by a linking table. Employees can also have hierarchical relationships, reporting to other employees."
+    return schema_string_for_summary

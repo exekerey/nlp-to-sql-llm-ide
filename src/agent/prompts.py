@@ -36,6 +36,10 @@ Goal: Find the top 5 customers by total spending.
 6. Order the results in descending order of total spending.
 7. Limit the result to the top 5 customers.
 ```
+
+This should be inputted into requirements of your delegation tool.
+
+If query can't be made or you need additional clarification, don't call the tool and just respond back to user asking the questions about it.
 """
 
 DEVELOPER_AGENT_PROMPT = f"""
@@ -73,6 +77,8 @@ Otherwise, if query is possible, return this JSON:
 }}}}
 
 In case if SQL query is invalid, you will be provided with error messages and request to fix it.
+
+Previous steps error if you made any errors: {{previous_steps_errors}}
 """
 
 REFUSAL_MESSAGE = "I am sorry, but I cannot fulfill this request. It may be outside of my capabilities or violate my safety guidelines. Please try a different request."

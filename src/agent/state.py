@@ -14,7 +14,11 @@ class State(BaseModel):
     messages: Annotated[Sequence[AnyMessage], add_messages] = Field(
         default_factory=list
     )
-    database_connection: str = Field(default_factory=str)
+
+    database_uri: str
+    database_dialect: str
+    schema_context: str
+
     model_config = ConfigDict(validate_assignment=True)
 
 

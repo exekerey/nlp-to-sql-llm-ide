@@ -99,6 +99,13 @@ def route_to_workflow(state: State):  # might be useful for swarm
     return dialog_state[-1]
 
 
+def init_node(state: State, config: RunnableConfig):
+    if config['configurable'].get('init'):
+        return END
+    print(state)
+    return "business_analyst"
+
+
 def route_llm(
         state: State,
 ):

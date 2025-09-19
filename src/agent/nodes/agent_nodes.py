@@ -12,35 +12,16 @@ from src.core.llms import get_llm
 
 
 def business_analyst_node(state: State, config: RunnableConfig) -> Dict[str, List[AIMessage]]:
-    database_schema_context = ...
+    database_schema_context = state.schema_context
 
     system_message = SystemMessage(content=BUSINESS_REQUIREMENTS_DEFINER_PROMPT.format(
         system_time=datetime.now().isoformat(),
         schema=database_schema_context,
     ))
-    llm = get_llm().bind_tools([search_web])
+    llm = get_llm().bind_tools(ba_tools)
 
     messages = filter_messages(state.messages)
     response = llm.invoke([system_message] + messages)
     return {
         "messages": [response],
-    }
-
-
-def database_administrator_node(state: State, runnable_config: RunnableConfig) -> Dict[str, List[AIMessage]]:
-    for _ in range(config.sql_generation_max_iterations):
-        system_message = SystemMessage(content=DEVELOPER_AGENT_PROMPT.format(
-            system_time=datetime.now().isoformat(),
-        ))
-
-        llm = get_llm().bind_tools([])
-        messages = filter_messages(state.messages)
-        llm.response_format = {}
-        response = llm.with_structured_output(method="json_mode").invoke([system_message] + messages)
-        return {
-            "messages": [response],
-        }
-
-    return {
-        "messages": ["Sorry, failed"],
     }

@@ -1,4 +1,3 @@
-import json
 import logging
 from datetime import datetime
 from typing import Annotated
@@ -9,6 +8,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 from langfuse import Langfuse
 from langgraph.prebuilt import InjectedState
+from sqlalchemy import create_engine, text
 
 from src.agent.nodes.util_nodes import filter_messages
 from src.agent.prompts import DEVELOPER_AGENT_PROMPT
@@ -89,8 +89,8 @@ def search_knowledge_base(state: Annotated[State, InjectedState], query: str, ev
 
 
 @tool("delegate_to_database_administrator", parse_docstring=True)
-def database_administrator_node(state: Annotated[State, InjectedState], runnable_config: RunnableConfig,
-                                sql_query_requirements: str) -> Dict[str, Dict]:
+def delegate_to_database_administrator(state: Annotated[State, InjectedState], runnable_config: RunnableConfig,
+                                       sql_query_requirements: str) -> Dict[str, Dict]:
     """
     Delegate to database administrator agent to create an SQL to match the needs of users.
 
@@ -100,10 +100,10 @@ def database_administrator_node(state: Annotated[State, InjectedState], runnable
     Returns:
         Either reason why it couldn't make an SQL query or SQL query itself.
     """
-    database_uri = state.database_connection
-    connection = connect_any_dialect(database_uri)
-    dialect = state.dialect
-    database_schema = ...
+    database_uri = state.database_uri
+    dialect = state.database_dialect
+    engine = create_engine(database_uri)
+    database_schema = state.schema_context
     error = None
     for _ in range(config.sql_generation_max_iterations):
         system_message = SystemMessage(content=DEVELOPER_AGENT_PROMPT.format(
@@ -111,24 +111,26 @@ def database_administrator_node(state: Annotated[State, InjectedState], runnable
             requirements=sql_query_requirements,
             dialect=dialect,
             schema=database_schema,
-            previous_steps_error=error
+            previous_steps_errors=error
         ))
 
         llm = get_llm().bind_tools([]).with_structured_output(method="json_mode")
         messages = filter_messages(state.messages)
-        response = llm.invoke([system_message] + messages)
+        payload = llm.invoke([system_message] + messages)
 
-        payload = json.loads(response.content)
-        if payload['mismatch']:
+        if payload.get('mismatch'):
             return f"Failed to generate SQL query, resposne from DBA: {payload['mismatch']}"
 
-        sql = payload['sql_query']
+        sql = payload.get('sql_query')
         try:
-            results = connection.execute(sql)
+            with engine.connect() as conn:
+                result = conn.execute(text(sql))
+                rows = result.fetchall()
         except Exception as e:
+            print(e)
             error = str(e)
             continue
-        payload.update({"query_results": results})
+        payload.update({"query_results": rows})
         return payload
 
     return "Sorry, DBA couldn't generate a valid query for your request"

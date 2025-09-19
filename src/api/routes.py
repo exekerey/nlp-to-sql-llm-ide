@@ -5,16 +5,16 @@ from fastapi import HTTPException
 from fastapi.responses import StreamingResponse, JSONResponse
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.runnables import RunnableConfig
-from pydantic import BaseModel, Field
 
 from src.agent.graph import graph
 from src.agent.langfuse_connection import langfuse_handler
+from src.agent.state import State
 from src.api.deps import validate_thread_id
 from src.core.models import DatabaseCredentials, Message
 from src.core.utils import generate_uuid
-from src.indexer.index import index_database
+from src.indexer.index import index_database, construct_db_uri
 
-router = APIRouter()
+router = APIRouter(prefix="/v1")
 
 
 # @router.get("/conversations")
@@ -23,47 +23,41 @@ router = APIRouter()
 @router.post("/conversation/init")
 def init_conversation(credentials: DatabaseCredentials):
     thread_id = generate_uuid()
-    database_structure = index_database(credentials, thread_id)
+    database_uri = construct_db_uri(credentials)
+    database_structure = index_database(database_uri, thread_id)
 
     if database_structure.startswith("Error:"):
         raise HTTPException(status_code=400, detail={"error": database_structure})
 
     # The frontend can use this structured data to generate a starter message.
+    state_to_save = State(
+        database_uri=database_uri,
+        database_dialect=credentials.engine,
+        schema_context=database_structure,
+    )
+
+    graph.invoke(state_to_save, config=RunnableConfig(
+        configurable={
+            "thread_id": thread_id,
+            "recursion_limit": 1,
+            "model": "default",
+            "init": True,
+        },
+    ))
+
     return {
         "thread_id": thread_id,
         "schema": database_structure
     }
 
 
-@router.post("/conversation/{chat_id}")
-def chat(msg: Message):
-    return {
-        "sql_query": "SELECT 1",
-        "explanation": "asdf",
-        "results": ["1"]
-    }
-
-
-class ChatRequest(BaseModel):
-    content: str = Field(min_length=1, max_length=2000, alias="message")
-
-
-#
-# @router.get("")
-# async def get_chat(thread_id: str = Depends(validate_thread_id)):
-#     with get_db_connection() as conn:
-#         return {
-#             "chat_id": thread_id,
-#             "data": get_conversation(conn, thread_id)
-#         }
-
-@router.post("")
+@router.post("/conversation/{thread_id}")
 async def chat(
-        req: ChatRequest,
+        msg: Message,
         thread_id: str = Depends(validate_thread_id),
         stream: bool = Query(default=False),
 ):
-    content = req.content
+    content = msg.content
     cfg = RunnableConfig(
         configurable={
             "thread_id": thread_id,
@@ -110,7 +104,7 @@ async def chat(
         return StreamingResponse(stream_response(), media_type="application/x-ndjson")
 
     try:
-        response = graph.graph.invoke(
+        response = graph.invoke(
             {"messages": [HumanMessage(content=content)]},
             config=cfg,
         )
@@ -118,6 +112,7 @@ async def chat(
         status_code = 200
 
     except Exception as e:
+        print(e)
         response_content = "Sorry, there was an error processing your request."
         status_code = 500
 
