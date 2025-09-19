@@ -36,7 +36,7 @@ function normalizeCredentials(cfg: DatabaseConfig) {
     return {
         engine,
         host: cfg.host,
-        port: Number(cfg.port), // страховка: всегда число
+        port: Number(cfg.port),
         database: cfg.database,
         username: cfg.username,
         password: cfg.password,
@@ -71,36 +71,57 @@ export async function apiInitConversation(
     return r.json();
 }
 
-export async function apiChatOnce(threadId: string, content: string): Promise<string> {
+type ChatBody = {
+    role: 'user';
+    content: string;
+    sql_query?: string | null;
+    query_results?: any[] | null;
+};
+
+export async function apiChatOnce(
+    threadId: string,
+    content: string,
+    opts?: { sqlQuery?: string | null; queryResults?: any[] | null }
+): Promise<string> {
+    const body: ChatBody = {
+        role: 'user',
+        content,
+        sql_query: opts?.sqlQuery ?? null,
+        query_results: opts?.queryResults ?? null,
+    };
+
     const r = await fetch(`${API_BASE}/conversation/${encodeURIComponent(threadId)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify(body),
     });
+
     if (!r.ok) {
         let raw = '';
         try {
             const j = await r.json();
-            raw = j?.detail ?? j?.error ?? (typeof j === 'string' ? j : JSON.stringify(j));
+            raw =
+                j?.detail?.error ??
+                j?.error ??
+                j?.detail ??
+                (typeof j === 'string' ? j : JSON.stringify(j));
         } catch {
             raw = await r.text();
         }
         throw new Error(raw || 'Chat failed');
     }
+
     const data = await r.json();
     return (data?.data?.[0]?.content ?? '').toString();
 }
 
+/** ---- STREAM CHAT (NDJSON) ---- **/
 export async function apiChatStream(
     threadId: string,
     content: string,
-    {
-        signal,
-        onStart,
-        onToken,
-        onInternal,
-        onEnd,
-    }: {
+    args: {
+        sqlQuery?: string | null;
+        queryResults?: any[] | null;
         signal?: AbortSignal;
         onStart?: () => void;
         onToken: (chunk: string) => void;
@@ -109,19 +130,33 @@ export async function apiChatStream(
     }
 ): Promise<void> {
     const url = `${API_BASE}/conversation/${encodeURIComponent(threadId)}?stream=true`;
+
+    const body: ChatBody = {
+        role: 'user',
+        content,
+        sql_query: args.sqlQuery ?? null,
+        query_results: args.queryResults ?? null,
+    };
+
     const r = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-        signal,
+        body: JSON.stringify(body),
+        signal: args.signal,
     });
+
     if (!r.ok || !r.body) {
         let raw = '';
-        try { raw = await r.text(); } catch {}
+        try {
+            const j = await r.json();
+            raw = j?.detail?.error ?? j?.error ?? j?.detail ?? (await r.text());
+        } catch {
+            raw = await r.text();
+        }
         throw new Error(raw || 'Stream failed to start');
     }
 
-    onStart?.();
+    args.onStart?.();
 
     const reader = r.body.getReader();
     const decoder = new TextDecoder('utf-8');
@@ -143,22 +178,23 @@ export async function apiChatStream(
                     const evt = JSON.parse(line);
                     switch (evt.event) {
                         case 'content':
-                            if (evt.data) onToken(String(evt.data));
+                            if (evt.data) args.onToken(String(evt.data));
                             break;
                         case 'internal':
-                            if (evt.data && onInternal) onInternal(String(evt.data));
+                            if (evt.data && args.onInternal) args.onInternal(String(evt.data));
                             break;
                         case 'error':
                             throw new Error((evt.data && String(evt.data)) || 'Stream error from server');
                     }
                 } catch {
-                    // игнорируем плохие строки
                 }
             }
         }
     } finally {
-        onEnd?.();
-        try { reader.releaseLock(); } catch {}
+        args.onEnd?.();
+        try {
+            reader.releaseLock();
+        } catch {}
     }
 }
 
