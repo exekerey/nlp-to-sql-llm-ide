@@ -100,16 +100,16 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ result, error, isExecuting 
                     </div>
                 </div>
             ) : result ? (
-                <div className="flex-1 overflow-auto">
-                    {/* min-w-max заставит появиться горизонтальный скролл, если колонок много */}
-                    <div className="min-w-max">
-                        <table className="table-fixed">
+                <div className="flex-1 overflow-hidden">
+                    {/* Фиксированная высота с двойным скроллом */}
+                    <div className="h-full overflow-auto">
+                        <table className="w-full table-auto min-w-max">
                             <thead className="bg-gray-800 sticky top-0 z-10">
                             <tr>
                                 {result.columns.map((column, index) => (
                                     <th
                                         key={index}
-                                        className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border-b border-gray-700"
+                                        className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border-b border-gray-700 whitespace-nowrap"
                                     >
                                         {column}
                                     </th>
@@ -120,9 +120,9 @@ const ResultsTable: React.FC<ResultsTableProps> = ({ result, error, isExecuting 
                             {result.rows.map((row, rowIndex) => (
                                 <tr key={rowIndex} className="hover:bg-gray-800 transition-colors duration-150">
                                     {row.map((cell, cellIndex) => (
-                                        <td key={cellIndex} className="px-4 py-3 text-sm text-gray-300 font-mono">
+                                        <td key={cellIndex} className="px-4 py-3 text-sm text-gray-300 font-mono whitespace-nowrap">
                                             <div
-                                                className="max-w-[28rem] overflow-hidden text-ellipsis whitespace-nowrap"
+                                                className="max-w-xs overflow-hidden text-ellipsis"
                                                 title={formatCellValue(cell)}
                                             >
                                                 {cell === null || cell === undefined ? (
