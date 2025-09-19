@@ -1,4 +1,28 @@
-export type DbType = 'postgresql' | 'mysql' | 'sqlite';
+export type DbType = 'postgres' | 'mysql' | 'clickhouse' | 'plsql';
+
+export interface DatabaseConfig {
+    engine?: DbType;
+    type?: DbType;
+    host: string;
+    port: number;
+    database: string;
+    username: string;
+    password: string;
+    ssl?: boolean;
+}
+
+export interface TableSchema {
+    name: string;
+    columns: {
+        name: string;
+        type: string;
+        nullable: boolean;
+        primaryKey: boolean;
+        foreignKey?: string;
+    }[];
+}
+
+export type SchemaPayload = TableSchema[] | string;
 
 export interface QueryResult {
     columns: string[];
@@ -13,26 +37,4 @@ export interface ChatMessage {
     content: string;
     sql?: string;
     timestamp: Date | string;
-}
-
-export interface DatabaseConfig {
-    type: DbType;
-    host: string;
-    port: number;
-    database: string;
-    username: string;
-    password: string;
-    ssl?: boolean;
-    sqlitePath?: string;
-}
-
-export interface TableSchema {
-    name: string;
-    columns: {
-        name: string;
-        type: string;
-        nullable: boolean;
-        primaryKey: boolean;
-        foreignKey?: string;
-    }[];
 }
