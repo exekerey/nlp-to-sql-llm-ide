@@ -5,7 +5,7 @@ import { testConnection } from '../api';
 
 interface DatabaseConnectionProps {
   onConnect: (config: DatabaseConfig) => void;
-  onTestConnect: () => void;                      // << добавили
+  onTestConnect: () => void;
   isIndexing: boolean;
   connectError?: string | null;
 }
@@ -57,7 +57,6 @@ const DatabaseConnection: React.FC<DatabaseConnectionProps> = ({ onConnect, onTe
     }
   };
 
-  // тест: бэкенд сам коннектится к test DB и возвращает thread_id + schema
   const handleTestConnection = async () => {
     setIsTesting(true);
     setTestResult(null);
