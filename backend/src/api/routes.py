@@ -6,12 +6,15 @@ from fastapi import HTTPException
 from fastapi.responses import StreamingResponse, JSONResponse
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.runnables import RunnableConfig
+from openai import BaseModel
+from sqlalchemy import create_engine, text
 from src.agent.graph import graph
 from src.agent.langfuse_connection import langfuse_handler
 from src.agent.state import State
 from src.api.deps import validate_thread_id
 from src.core.models import DatabaseCredentials, Message
 from src.core.utils import generate_uuid
+from src.core.utils import normalize_sql_rows
 from src.indexer.index import index_database, construct_db_uri
 
 router = APIRouter(prefix="/v1")
@@ -48,6 +51,32 @@ def init_conversation(credentials: DatabaseCredentials):
     return {
         "thread_id": thread_id,
         "schema": database_structure
+    }
+
+
+class ExecuteSQLRequest(BaseModel):
+    query: str
+
+
+@router.post("/conversation/{thread_id}/sql")
+async def execute_sql(req: ExecuteSQLRequest, thread_id: str = Depends(validate_thread_id)):
+    query = req.query
+    state = graph.invoke({}, config=RunnableConfig(
+        configurable={
+            "thread_id": thread_id,
+            "recursion_limit": 1,
+            "model": "default",
+            "init": True,
+        },
+    ))
+    engine = create_engine(state['database_uri'])
+    with engine.connect() as conn:
+        result = conn.execute(text(query))
+        rows = result.mappings().all()
+        rows = normalize_sql_rows(rows)
+
+    return {
+        "query_results": rows,
     }
 
 
