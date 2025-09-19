@@ -1,5 +1,7 @@
 from typing import Literal
+from typing import TypedDict, Any, List, Optional
 
+from langchain_core.messages import ToolMessage
 from pydantic import BaseModel, Field
 
 
@@ -15,3 +17,9 @@ class DatabaseCredentials(BaseModel):
 class Message(BaseModel):
     content: str
     role: Literal["user", "developer", "assistant"]
+
+
+class SQLUpdate(TypedDict):
+    sql_query: Optional[str]
+    query_results: Optional[List[Any]]
+    messages: List[ToolMessage]

@@ -7,23 +7,20 @@ from langchain_core.runnables import RunnableLambda, RunnableConfig
 from langgraph.config import get_stream_writer
 from langgraph.constants import END
 from langgraph.prebuilt import ToolNode, tools_condition
-from langgraph.types import Send
-
 from src.agent.state import State
 from src.core.config import config
+from src.core.models import SQLUpdate
 
 
 def handle_tool_error(state) -> dict:
     error = state.get("error")
     tool_calls = state.messages[-1].tool_calls
-    if error:
-        logger.error(error)
     return {
         "messages": [
             ToolMessage(
                 content=f"Error: {repr(error)}\n. Fix your mistakes and retry if it is your fault.",
                 # Otherwise return that you have technical issues if it's not your fault todo.
-                tool_call_id=tc["id"],
+                # tool_call_id=tc["id"],
             )
             for tc in tool_calls
         ]
@@ -100,10 +97,24 @@ def route_to_workflow(state: State):  # might be useful for swarm
 
 
 def init_node(state: State, config: RunnableConfig):
+    return {
+        "sql_query": None,
+        "query_results": None
+    }
+
+
+def init_condition(state: State, config: RunnableConfig):
     if config['configurable'].get('init'):
         return END
-    print(state)
+
+    state.sql_query = None
+    state.query_results = None
+    # state.messages = []
     return "business_analyst"
+    # return Command(
+    #     update=SQLUpdate(**{"sql_query": None, "query_results": None}),
+    #     goto="business_analyst"
+    # )
 
 
 def route_llm(
@@ -121,15 +132,7 @@ def route_llm(
     #     return "tools"
     if tool_calls:
         return "business_analyst_tools"
-    return [
-        Send("add_tools_to_context", state.model_copy(deep=True)),
-        # TODO: also need to get only that  tool with retrieval
-        Send("llm_tools", state.model_copy(deep=True)),
-        # TODO: need to either ignore retrieving tool in the tool node or remove it's invocation from messages.
-        #  second is more complex to do and more code but easier to grasp later though.
-        #  also another way is to keep separate variable in the state speciallyl for tool invocations, but yeah that's weird though.
-
-    ]
+    return END
 
 
 def delete_messages(state):

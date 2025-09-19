@@ -1,9 +1,12 @@
 """Utility & helper functions."""
 import asyncio
+import base64
+import datetime
 import json
 import threading
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from decimal import getcontext
 
 from httpx import HTTPError
@@ -12,6 +15,30 @@ from langchain_core.messages import BaseMessage
 _loop = None
 
 getcontext().prec = 30
+
+
+def normalize_sql_rows(rows):
+    def clean_value(v):
+        if isinstance(v, Decimal):
+            return int(v) if v == v.to_integral_value() else float(v)
+        if isinstance(v, (datetime.date, datetime.datetime, datetime.time)):
+            return v.isoformat()
+        if isinstance(v, uuid.UUID):
+            return str(v)
+        if isinstance(v, (bytes, bytearray)):
+            return base64.b64encode(v).decode()
+        if isinstance(v, dict):
+            return {k: clean_value(val) for k, val in v.items()}
+        if isinstance(v, (list, tuple)):
+            return [clean_value(val) for val in v]
+        return v
+
+    out = []
+    for row in rows:
+        # RowMapping behaves like a dict
+        d = dict(row)
+        out.append({k: clean_value(v) for k, v in d.items()})
+    return out
 
 
 def raise_for_status_informative(response):

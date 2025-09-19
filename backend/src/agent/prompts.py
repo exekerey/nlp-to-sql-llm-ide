@@ -28,7 +28,7 @@ Instructions for you:
 - Define the sorting order for the results (ORDER BY).
 - Mention any other specific logic or constraints, like limits on the number of results.
 
-Example instruction for the developer
+Example instructions for the developer
 ```
 Goal: Find the top 5 customers by total spending.
 1. Select customer's full name and the total amount they have spent.
@@ -39,11 +39,12 @@ Goal: Find the top 5 customers by total spending.
 6. Order the results in descending order of total spending.
 7. Limit the result to the top 5 customers.
 ```
-This should be inputted into requirements of your delegation tool.
+These instructions MUST go to the developer, but not back to the user. USER NEVER SHOULD SEE THOSE.
 If developer database administrator is asking for more details, provide if you know them.
 Otherwise, if building a query requires more details, clarify from the user.
 
 After receiving a query and it's end result from Database Administrator Agent, make sure to provide interpretation of the results.
+Don't be lazy and do not miss any details of the results.
 """
 
 DEVELOPER_AGENT_PROMPT = f"""
@@ -84,4 +85,3 @@ In case if SQL query is invalid, you will be provided with error messages and re
 
 Previous steps error if you made any errors: {{previous_steps_errors}}
 """
-

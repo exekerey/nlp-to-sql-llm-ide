@@ -1,11 +1,11 @@
 import json
+import traceback
 
 from fastapi import APIRouter, Depends, Query
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse, JSONResponse
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.runnables import RunnableConfig
-
 from src.agent.graph import graph
 from src.agent.langfuse_connection import langfuse_handler
 from src.agent.state import State
@@ -102,17 +102,21 @@ async def chat(
                 yield preprocess_event({"event": "error", "chat_id": thread_id, "data": "Sorry, an error occurred."})
 
         return StreamingResponse(stream_response(), media_type="application/x-ndjson")
-
+    extra = {}
     try:
         response = graph.invoke(
             {"messages": [HumanMessage(content=content)]},
             config=cfg,
         )
+
+        extra = {"sql_query": response.get('sql_query'),
+                 "rows": response.get('query_results')}
         response_content = response['messages'][-1].content
         status_code = 200
 
     except Exception as e:
-        print(e)
+        last = traceback.extract_tb(e.__traceback__)[-1]
+        print(last, e)
         response_content = "Sorry, there was an error processing your request."
         status_code = 500
 
@@ -120,6 +124,7 @@ async def chat(
         "chat_id": thread_id,
         "data": [{
             "role": "assistant",
-            "content": response_content
+            "content": response_content,
+            **extra,
         }]
     }, status_code=status_code)

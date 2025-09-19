@@ -3,18 +3,20 @@ from datetime import datetime
 from typing import Annotated
 
 from httpx import AsyncClient
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import SystemMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import tool
+from langchain_core.tools import tool, InjectedToolCallId
 from langfuse import Langfuse
 from langgraph.prebuilt import InjectedState
+from langgraph.types import Command
 from sqlalchemy import create_engine, text
-
 from src.agent.nodes.util_nodes import filter_messages
 from src.agent.prompts import DEVELOPER_AGENT_PROMPT
 from src.agent.state import State
 from src.core.config import config
 from src.core.llms import get_llm
+from src.core.models import SQLUpdate
+from src.core.utils import normalize_sql_rows
 from src.core.utils import run_async
 from src.core.vector_store import *
 from src.core.vector_store import query_collection
@@ -89,7 +91,8 @@ def search_knowledge_base(state: Annotated[State, InjectedState], query: str, ev
 
 
 @tool("delegate_to_database_administrator", parse_docstring=True)
-def delegate_to_database_administrator(state: Annotated[State, InjectedState], runnable_config: RunnableConfig,
+def delegate_to_database_administrator(tool_call_id: Annotated[str, InjectedToolCallId],
+                                       state: Annotated[State, InjectedState], runnable_config: RunnableConfig,
                                        sql_query_requirements: str) -> Dict[str, Dict]:
     """
     Delegate to database administrator agent to create an SQL to match the needs of users.
@@ -101,6 +104,7 @@ def delegate_to_database_administrator(state: Annotated[State, InjectedState], r
         Either reason why it couldn't make an SQL query or SQL query itself.
     """
     database_uri = state.database_uri
+
     dialect = state.database_dialect
     engine = create_engine(database_uri)
     database_schema = state.schema_context
@@ -119,19 +123,24 @@ def delegate_to_database_administrator(state: Annotated[State, InjectedState], r
         payload = llm.invoke([system_message] + messages)
 
         if payload.get('mismatch'):
-            return f"Failed to generate SQL query, resposne from DBA: {payload['mismatch']}"
+            return f"Failed to generate SQL query, response from DBA: {payload['mismatch']}"
 
         sql = payload.get('sql_query')
         try:
             with engine.connect() as conn:
                 result = conn.execute(text(sql))
-                rows = result.fetchall()
+                rows = result.mappings().all()
+                rows = normalize_sql_rows(rows)
         except Exception as e:
-            print(e)
             error = str(e)
             continue
         payload.update({"query_results": rows})
-        return payload
+        state.sql_query = sql
+        state.query_results = rows
+        state.messages.append(ToolMessage(content=payload, tool_call_id=tool_call_id))
+        return Command(
+            update=state,
+        )
 
     return "Sorry, DBA couldn't generate a valid query for your request"
 
