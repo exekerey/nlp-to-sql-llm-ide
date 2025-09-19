@@ -1,4 +1,7 @@
 # BI-GPT: Your Natural Language to SQL Data Analyst
+<img width="892" height="785" alt="image" src="https://github.com/user-attachments/assets/f6102189-91a5-41ba-a103-ac92e2fbd637" />
+
+<img width="2362" height="1361" alt="image" src="https://github.com/user-attachments/assets/88abb704-d3c9-4096-8337-fb99bd6667a1" />
 
 BI-GPT is an intelligent AI agent designed to empower business leaders and employees to interact with corporate
 databases using everyday language. Say goodbye to complex SQL queries and waiting for analysts – simply ask your data
