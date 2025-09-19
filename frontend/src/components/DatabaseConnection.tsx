@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { Database, Server, Key, Globe, Shield, Loader, CheckCircle, AlertCircle } from 'lucide-react';
-import { DatabaseConfig } from '../App';
+import type { DatabaseConfig } from '../App';
 import { testConnection } from '../api';
 
 interface DatabaseConnectionProps {
   onConnect: (config: DatabaseConfig) => void;
+  onTestConnect: () => void;                      // << добавили
   isIndexing: boolean;
   connectError?: string | null;
 }
 
-const DatabaseConnection: React.FC<DatabaseConnectionProps> = ({ onConnect, isIndexing, connectError }) => {
+const DatabaseConnection: React.FC<DatabaseConnectionProps> = ({ onConnect, onTestConnect, isIndexing, connectError }) => {
   const [config, setConfig] = useState<DatabaseConfig>({
     type: 'postgresql',
     host: 'localhost',
@@ -33,28 +34,21 @@ const DatabaseConnection: React.FC<DatabaseConnectionProps> = ({ onConnect, isIn
 
   const handleTypeChange = (type: DatabaseConfig['type']) => {
     const dbType = dbTypes.find(db => db.value === type);
-    setConfig(prev => ({
-      ...prev,
-      type,
-      port: dbType?.defaultPort || prev.port
-    }));
+    setConfig(prev => ({ ...prev, type, port: dbType?.defaultPort || prev.port }));
   };
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-
     if (!config.host.trim()) newErrors.host = 'Host is required';
     if (!config.database.trim()) newErrors.database = 'Database name is required';
     if (!config.username.trim()) newErrors.username = 'Username is required';
     if (config.type !== 'sqlite' && config.port <= 0) newErrors.port = 'Valid port is required';
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleConnect = async () => {
     if (!validateForm()) return;
-
     setIsConnecting(true);
     try {
       await onConnect(config);
@@ -63,13 +57,14 @@ const DatabaseConnection: React.FC<DatabaseConnectionProps> = ({ onConnect, isIn
     }
   };
 
+  // тест: бэкенд сам коннектится к test DB и возвращает thread_id + schema
   const handleTestConnection = async () => {
     setIsTesting(true);
     setTestResult(null);
-    
     try {
       await testConnection();
-      setTestResult({ success: true, message: 'Backend connection successful!' });
+      setTestResult({ success: true, message: 'Connected to test DB via backend' });
+      await onTestConnect();
     } catch (error: any) {
       setTestResult({ success: false, message: error?.message || 'Connection test failed' });
     } finally {
@@ -126,18 +121,15 @@ const DatabaseConnection: React.FC<DatabaseConnectionProps> = ({ onConnect, isIn
             <p className="text-gray-400">Configure your database connection to get started</p>
           </div>
 
-          {/* аккуратный баннер ошибки — добавлен, дизайн не трогаем */}
           {connectError && (
               <div className="p-3 mb-6 rounded-lg bg-red-900/30 border border-red-700 text-red-300 text-sm whitespace-pre-wrap break-words">
                 {connectError}
               </div>
           )}
 
-          {/* Test Result Banner */}
           {testResult && (
               <div className={`p-3 mb-6 rounded-lg text-sm flex items-center space-x-2 ${
-                  testResult.success 
-                      ? 'bg-green-900/30 border border-green-700 text-green-300' 
+                  testResult.success ? 'bg-green-900/30 border border-green-700 text-green-300'
                       : 'bg-red-900/30 border border-red-700 text-red-300'
               }`}>
                 {testResult.success ? (
@@ -322,7 +314,6 @@ const DatabaseConnection: React.FC<DatabaseConnectionProps> = ({ onConnect, isIn
             </div>
           </form>
 
-          {/* нижняя подсказка — как в старом дизайне */}
           <div className="mt-6 p-4 bg-gray-700 rounded-lg">
             <p className="text-xs text-gray-400 mb-2">
               <strong>Note:</strong> This is a demo application. Connection details are not actually used to connect to a real database.

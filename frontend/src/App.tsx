@@ -4,7 +4,7 @@ import ChatInterface from './components/ChatInterface';
 import SQLEditor from './components/SQLEditor';
 import ResultsTable from './components/ResultsTable';
 import { Database } from 'lucide-react';
-import { initConversation, sendChatMessage, executeSql, type InitPayload } from './api';
+import { initConversation, sendChatMessage, executeSql, testConnection, type InitPayload } from './api';
 
 export interface QueryResult {
   columns: string[];
@@ -53,8 +53,7 @@ function App() {
     {
       id: 'welcome',
       type: 'assistant',
-      content:
-          "Hello! I'm your SQL AI assistant. Connect to your DB and ask me anything.",
+      content: "Hello! I'm your SQL AI assistant. Connect to your DB and ask me anything.",
       timestamp: new Date()
     }
   ]);
@@ -64,23 +63,23 @@ function App() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // простая проверка что строка похожа на SQL
   const looksLikeSQL = (s?: string | null) => {
     if (!s) return false;
     const t = s.trim().toUpperCase();
     return /^(SELECT|INSERT|UPDATE|DELETE|WITH|CREATE|ALTER|DROP|TRUNCATE)\b/.test(t);
   };
 
+  // обычный коннект по введённым кредам
   const handleConnect = async (config: DatabaseConfig) => {
     setConnectError(null);
     setDbConfig(config);
     setIsIndexing(true);
     try {
       const payload: InitPayload = {
-        engine: config.type === 'postgresql' ? 'postgres'
-            : config.type === 'mysql' ? 'mysql'
-                : config.type === 'sqlite' ? 'postgres' // не используем sqlite на бэке; заглушка
-                    : 'postgres',
+        engine:
+            config.type === 'postgresql' ? 'postgres' :
+                config.type === 'mysql' ? 'mysql' :
+                    'postgres',
         host: config.host,
         port: config.port,
         database: config.database,
@@ -88,22 +87,49 @@ function App() {
         password: config.password,
         ssl: !!config.ssl
       };
+
       const resp = await initConversation(payload);
       setThreadId(resp.thread_id);
       setIsConnected(true);
 
-      // сообщение со схемой
       setMessages(prev => [
         ...prev,
         {
           id: `schema-${Date.now()}`,
           type: 'assistant',
-          content: `Connected to ${payload.engine} database "${config.database}"!\n\nReceived schema description (text):\n\n${resp.schema}`,
+          content: `Connected to ${payload.engine} database "${config.database}"!\n\nReceived schema (text):\n\n${resp.schema}`,
           timestamp: new Date()
         }
       ]);
     } catch (e: any) {
       setConnectError(typeof e?.message === 'string' ? e.message : 'Failed to connect');
+      setIsIndexing(false);
+      return;
+    }
+    setIsIndexing(false);
+  };
+
+  // тестовый коннект: просто дергаем use_test_db=true и считаем, что подключены
+  const handleTestConnect = async () => {
+    setConnectError(null);
+    setIsIndexing(true);
+    try {
+      const resp = await testConnection();
+      setThreadId(resp.thread_id);
+      setIsConnected(true);
+
+      // логируем в чат полученную схему (без каких-либо кредов)
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `schema-test-${Date.now()}`,
+          type: 'assistant',
+          content: `Connected to TEST database via backend.\n\nReceived schema (text):\n\n${resp.schema}`,
+          timestamp: new Date()
+        }
+      ]);
+    } catch (e: any) {
+      setConnectError(typeof e?.message === 'string' ? e.message : 'Test connect failed');
       setIsIndexing(false);
       return;
     }
@@ -138,7 +164,6 @@ function App() {
 
       setMessages(prev => [...prev, assistantMsg]);
 
-      // В РЕДАКТОР — только валидный SQL
       if (looksLikeSQL(sqlFromServer)) {
         setCurrentSQL(sqlFromServer!.trim());
       }
@@ -162,19 +187,15 @@ function App() {
     try {
       const start = performance.now();
       const { query_results } = await executeSql(threadId, sql);
-      // преобразуем в QueryResult (columns + rows)
+
       let columns: string[] = [];
       const rowsArray: any[][] = [];
-
       if (Array.isArray(query_results) && query_results.length > 0) {
         const first = query_results[0];
         if (first && typeof first === 'object' && !Array.isArray(first)) {
           columns = Object.keys(first);
-          for (const r of query_results) {
-            rowsArray.push(columns.map(c => (r as any)[c]));
-          }
+          for (const r of query_results) rowsArray.push(columns.map(c => (r as any)[c]));
         } else if (Array.isArray(first)) {
-          // сервер вернул массив массивов
           columns = first.map((_, i) => `col_${i + 1}`);
           for (const r of query_results) rowsArray.push(r as any[]);
         }
@@ -194,7 +215,14 @@ function App() {
   };
 
   if (!isConnected) {
-    return <DatabaseConnection onConnect={handleConnect} isIndexing={isIndexing} connectError={connectError} />;
+    return (
+        <DatabaseConnection
+            onConnect={handleConnect}
+            onTestConnect={handleTestConnect}
+            isIndexing={isIndexing}
+            connectError={connectError}
+        />
+    );
   }
 
   return (
@@ -208,7 +236,7 @@ function App() {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2 text-sm text-gray-400">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              <span>Connected to {dbConfig?.database} ({dbConfig?.type})</span>
+              <span>Connected {threadId ? `(#${threadId.slice(0,8)})` : ''}</span>
             </div>
           </div>
         </div>
