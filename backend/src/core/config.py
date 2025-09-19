@@ -21,6 +21,13 @@ class Config(BaseSettings):
 
     jina_api_key: str
 
+    # test db
+    test_db_engine: str
+    test_db_host: str
+    test_db_port: int
+    test_db_username: str
+    test_db_password: str
+
     # langfuse
     langfuse_host: str
     langfuse_public_key: str

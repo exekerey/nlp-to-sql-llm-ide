@@ -12,6 +12,7 @@ from src.agent.graph import graph
 from src.agent.langfuse_connection import langfuse_handler
 from src.agent.state import State
 from src.api.deps import validate_thread_id
+from src.core.config import config
 from src.core.models import DatabaseCredentials, Message
 from src.core.utils import generate_uuid
 from src.core.utils import normalize_sql_rows
@@ -24,7 +25,15 @@ router = APIRouter(prefix="/v1")
 
 
 @router.post("/conversation/init")
-def init_conversation(credentials: DatabaseCredentials):
+def init_conversation(credentials: DatabaseCredentials, use_test_db: bool = Query(default=False)):
+    if use_test_db:
+        credentials = DatabaseCredentials(
+            engine=config.test_db_engine,
+            host=config.test_db_host,
+            port=config.test_db_port,
+            username=config.test_db_username,
+            password=config.test_db_password,
+        )
     thread_id = generate_uuid()
     database_uri = construct_db_uri(credentials)
     database_structure = index_database(database_uri, thread_id)
