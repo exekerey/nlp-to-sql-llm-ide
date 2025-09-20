@@ -1,5 +1,4 @@
 # BI-GPT: Your Natural Language to SQL Data Analyst
-<img width="892" height="785" alt="image" src="https://github.com/user-attachments/assets/f6102189-91a5-41ba-a103-ac92e2fbd637" />
 
 <img width="2362" height="1361" alt="image" src="https://github.com/user-attachments/assets/88abb704-d3c9-4096-8337-fb99bd6667a1" />
 
@@ -7,24 +6,21 @@ BI-GPT is an intelligent AI agent designed to empower business leaders and emplo
 databases using everyday language. Say goodbye to complex SQL queries and waiting for analysts – simply ask your data
 questions in plain English or Russian, and BI-GPT delivers accurate, aggregated insights with clear explanations.
 
-## Key Capabilities & User Benefits
+## Key Capabilities
 
-- **Effortless Data Access:** Ask questions like "What was the profit for the last 2 days?" or "Show me monthly margins"
-  and receive immediate, relevant data from your corporate database.
-- **Intelligent Query Generation:** Our advanced multi-agent system understands your natural language requests,
-  intelligently translates them into precise SQL queries, and considers your specific business glossary and rules.
-- **Context-Aware Conversations:** Engage in natural, ongoing dialogues. BI-GPT remembers previous interactions,
-  allowing you to ask follow-up questions and refine your data exploration seamlessly.
-- **Built-in Data Security:** All generated SQL queries undergo rigorous validation to prevent sensitive data (PII)
-  leaks, enforce query limits, and ensure safe execution, protecting your valuable information.
-- **Database Schema Understanding:** You don't need to know your database's intricate structure. BI-GPT deeply
-  understands tables, columns, and relationships, ensuring it generates valid and relevant queries every time.
-- **Interactive Data Exploration:** Review the AI-generated SQL, execute it with a click, and instantly view the results
-  in a clear, tabular format within an intuitive web interface.
-- **Beyond Data Queries:** If your question isn't about data, BI-GPT can engage in friendly conversation, providing a
-  versatile and helpful assistant experience.
-- **Visual Data Insights (Coming Soon):** Future enhancements will include the ability to generate various charts (pie,
-  histogram, line, scatter) directly from your query results, offering visual summaries of your data.
+- **Super fast:** Get responses in few seconds, not few minutes.
+- **Natural Language to SQL:** Seamlessly convert natural language queries into precise SQL commands.
+- **SQL Execution:** Execute generated SQL queries directly against your database.
+- **Query Correction & Refinement:** Automatically detect and correct errors in generated SQL, and refine queries for
+  optimal performance and accuracy.
+- **Contextual Understanding:** Maintain conversation context to understand follow-up questions and build upon previous
+  interactions.
+- **Database Schema Introspection:** Automatically infer and utilize your database schema for more accurate and relevant
+  SQL generation.
+- **Secure & Private:** Designed with security and privacy in mind, ensuring your data remains protected.
+- **Extensible & Customizable:** Easily extend and customize the agent's capabilities to fit your specific needs.
+
+[//]: # (- **Local-first:** Run entirely locally, ensuring data privacy and minimizing latency.)
 
 ## How It Works (High-Level)
 

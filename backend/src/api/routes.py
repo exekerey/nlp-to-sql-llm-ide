@@ -43,7 +43,7 @@ def init_conversation(credentials: DatabaseCredentials, use_test_db: bool = Quer
         )
     thread_id = generate_uuid()
     database_uri = construct_db_uri(credentials)
-    database_structure = index_database(database_uri, thread_id)
+    database_summary, database_structure = index_database(database_uri, thread_id)
 
     if database_structure.startswith("Error:"):
         raise HTTPException(status_code=400, detail={"error": database_structure})
@@ -66,7 +66,7 @@ def init_conversation(credentials: DatabaseCredentials, use_test_db: bool = Quer
 
     return {
         "thread_id": thread_id,
-        "schema": database_structure
+        "schema": database_summary
     }
 
 

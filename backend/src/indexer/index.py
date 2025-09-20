@@ -56,6 +56,7 @@ def _summarize_schema_with_llm(schema_string: str) -> str:
     Based on the following database schema, please provide a concise, high-level summary.
     Focus on the main entities and their relationships. Do not describe every single column.
     The summary should be a single paragraph that can be used as context for another AI.
+    After summary, provide example questions for Business Intelligence purposes.
 
     Schema:
     ---
@@ -68,7 +69,7 @@ def _summarize_schema_with_llm(schema_string: str) -> str:
     return response.content
 
 
-def index_database(database_uri: str, thread_id: str) -> str:
+def index_database(database_uri: str, thread_id: str) -> (str, str):
     """
     Connects to a database, indexes its schema into a vector store,
     and returns a high-level summary for the agent's context.
@@ -98,4 +99,4 @@ def index_database(database_uri: str, thread_id: str) -> str:
     # 3. Generate a high-level summary for the LLM context
     schema_string_for_summary = "\n\n".join(docs)
     summary = _summarize_schema_with_llm(schema_string_for_summary)
-    return schema_string_for_summary
+    return summary, schema_string_for_summary
